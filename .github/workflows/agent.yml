@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        profile: [conservative, aggressive, momentum]
+        profile: [conservative, aggressive]
     environment: ${{ matrix.profile }}
     env:
       ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
