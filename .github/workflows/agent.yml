@@ -15,14 +15,18 @@ on:
         type: boolean
         default: false
 
-concurrency:
-  group: riskgate-agent
-  cancel-in-progress: false
-
 jobs:
   agent:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: riskgate-agent-${{ matrix.profile }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [conservative, aggressive, momentum]
+    environment: ${{ matrix.profile }}
     env:
       ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
       ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
@@ -60,9 +64,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: riskgate.db
-          key: riskgate-db-${{ github.run_id }}
+          key: riskgate-db-${{ matrix.profile }}-${{ github.run_id }}
           restore-keys: |
-            riskgate-db-
+            riskgate-db-${{ matrix.profile }}-
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -86,13 +90,13 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: riskgate.db
-          key: riskgate-db-${{ github.run_id }}
+          key: riskgate-db-${{ matrix.profile }}-${{ github.run_id }}
 
       - name: Publish trade journal as a downloadable artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: riskgate-db
+          name: riskgate-db-${{ matrix.profile }}
           path: riskgate.db
           retention-days: 14
           if-no-files-found: ignore
