@@ -1,0 +1,38 @@
+name: Account identifiers
+
+# Each profile's Alpaca credentials live in a GitHub Environment, so the only
+# way to read the account identifiers they belong to is from inside a job that
+# has that environment attached. Account ids and numbers are not secrets — the
+# hackathon submission form asks for one — so printing them to the job log is
+# safe; the API keys themselves stay masked by Actions.
+on:
+  workflow_dispatch:
+
+jobs:
+  identify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [conservative, aggressive]
+    environment: ${{ matrix.profile }}
+    env:
+      ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+      ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+      ALPACA_PAPER: "true"
+      PAPER_TRADING_ONLY: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Print account identifiers
+        run: |
+          echo "profile=${{ matrix.profile }}"
+          python scripts/print_account_id.py
