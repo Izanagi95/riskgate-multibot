@@ -36,3 +36,20 @@ jobs:
         run: |
           echo "profile=${{ matrix.profile }}"
           python scripts/print_account_id.py
+
+      # Which underlyings an account actually holds is the only unambiguous
+      # way to tie an account back to the journal schema that recorded its
+      # trades — equity alone moves too much to match on.
+      - name: Print open positions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from app.alpaca.client import AlpacaClients
+          from app.config.settings import Settings
+
+          clients = AlpacaClients(Settings.from_env(Path(".env")))
+          positions = clients.trading.get_all_positions()
+          print(f"open_legs={len(positions)}")
+          for p in positions:
+              print(f"position {p.symbol} qty={p.qty} unrealized={p.unrealized_pl}")
+          PY
